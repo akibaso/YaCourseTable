@@ -1,0 +1,41 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.migration/
+
+# IntelliJ family
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart
+lib/*.g.dart
+!lib/main.dart
+*.dart_tool/
+dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Android
+android/.gradle/
+android/local.properties
+android/.idea/
+android/app/.cxx/
+android/build/
+android/app/build/
+
+# iOS
+ios/Pods/
+ios/Xcode/
+ios/.swiftpm/
+ios/Flutter/
