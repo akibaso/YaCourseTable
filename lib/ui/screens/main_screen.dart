@@ -2,20 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
+import 'package:ya_coursetable/core/weeks.dart';
+import 'package:ya_coursetable/ui/widgets/schedule_switcher.dart';
+import 'package:ya_coursetable/ui/widgets/timetable_grid.dart';
+import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 
 import 'import_screen.dart';
 
-/// 主界面：周课表网格（Task 4 完整网格在此之后填充）。
-/// 当前提供：顶部工具栏（添加/导入/导出/更多）、多课表切换器、周数轴骨架。
-class MainScreen extends ConsumerWidget {
+/// 主界面：周数轴（多时间表）+ 周课表网格 + 多课表切换器（底部）。
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen> {
+  int _week = 1;
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dataAsync = ref.watch(appDataProvider);
-    final data = dataAsync.value ?? AppData();
+    final data = ref.watch(appDataProvider).value ?? AppData();
     final schedule = data.activeSchedule();
+    final todayWeek = schedule != null
+        ? Weeks.currentWeek(DateTime.parse(schedule.semesterStartIso), DateTime.now())
+        : 1;
+    final week = todayWeek > 0 ? todayWeek : _week;
 
     return Scaffold(
       appBar: AppBar(
@@ -47,38 +60,44 @@ class MainScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: dataAsync.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.calendar_month, size: 64, color: scheme.primary),
-                  const SizedBox(height: 12),
-                  Text(
-                    '周数轴 / 课表网格（Task 4）',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 8),
-                  if (data.schedules.length > 1)
-                    Wrap(
-                      spacing: 8,
+      body: Column(
+        children: [
+          // 周数轴（多时间表）
+          if (schedule != null)
+            WeekAxis(
+              totalWeeks: schedule.totalWeeks,
+              currentWeek: week,
+              onSelect: (w) => setState(() => _week = w),
+            ),
+          const Divider(height: 1),
+          // 课表网格
+          Expanded(
+            child: schedule == null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        for (final s in data.schedules)
-                          ActionChip(
-                            label: Text(s.name),
-                            backgroundColor: s.id == schedule?.id
-                                ? scheme.secondaryContainer
-                                : null,
-                            onPressed: () {
-                              ref.read(appDataProvider.notifier).setActiveSchedule(s.id);
-                            },
-                          ),
+                        Icon(Icons.calendar_month, size: 64, color: scheme.primary),
+                        const SizedBox(height: 12),
+                        Text('还没有课表，点击右上角“导入课表”开始',
+                            style: TextStyle(color: scheme.onSurfaceVariant)),
                       ],
                     ),
-                ],
-              ),
+                  )
+                : TimetableGrid(schedule: schedule, week: week),
+          ),
+          // 多课表切换器
+          if (data.schedules.length > 1)
+            ScheduleSwitcher(
+              schedules: data.schedules,
+              activeId: data.activeScheduleId,
+              week: week,
+              onSelect: (id) {
+                ref.read(appDataProvider.notifier).setActiveSchedule(id);
+              },
             ),
+        ],
+      ),
     );
   }
 }

@@ -1,27 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:ya_coursetable/app_theme.dart';
+import 'package:ya_coursetable/core/app_state.dart';
+import 'package:ya_coursetable/core/models.dart';
 import 'package:ya_coursetable/ui/screens/main_screen.dart';
+import 'package:ya_coursetable/ui/widgets/schedule_switcher.dart';
+import 'package:ya_coursetable/ui/widgets/timetable_grid.dart';
+import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 
 void main() {
-  testWidgets('MainScreen renders toolbar actions and placeholder body', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: const MainScreen(),
-        ),
-      ),
+  testWidgets('full main screen with 2 schedules', (tester) async {
+    final data = AppData(
+      activeScheduleId: 'a',
+      schedules: [
+        Schedule(id: 'a', name: '我的课表', semesterStartIso: '2026-09-07', totalWeeks: 20,
+          courses: [
+            Course(id: 'c1', scheduleId: 'a', name: '高等数学', timeSlots: [
+              TimeSlot(dayOfWeek: 1, startPeriod: 1, endPeriod: 2, weekSpec: WeekSpec(weeks: [1, 20]))]),
+          ]),
+        Schedule(id: 'b', name: '第二课表', semesterStartIso: '2026-09-07'),
+      ],
     );
-
-    // Toolbar buttons: add course / import / export / more.
+    await tester.pumpWidget(ProviderScope(
+      overrides: [appDataProvider.overrideWith((ref) => _Seed(ref, data))],
+      child: MaterialApp(theme: AppTheme.light(), home: const MainScreen()),
+    ));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.byTooltip('添加课程'), findsOneWidget);
     expect(find.byTooltip('导入课表'), findsOneWidget);
     expect(find.byTooltip('导出课表'), findsOneWidget);
-    expect(find.byTooltip('更多功能'), findsOneWidget);
-    // Placeholder body text.
-    expect(find.text('周数轴 / 课表网格（Task 4）'), findsOneWidget);
+    expect(find.byType(WeekAxis), findsOneWidget);
+    expect(find.byType(TimetableGrid), findsOneWidget);
+    expect(find.byType(ScheduleSwitcher), findsOneWidget);
+    expect(find.text('第二课表'), findsOneWidget);
   });
+}
+
+class _Seed extends AppDataNotifier {
+  _Seed(super.ref, AppData data) : super() {
+    state = AsyncValue<AppData>.data(data);
+  }
 }
