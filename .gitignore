@@ -39,3 +39,4 @@ ios/Pods/
 ios/Xcode/
 ios/.swiftpm/
 ios/Flutter/
+build/
