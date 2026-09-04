@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
 import 'package:ya_coursetable/core/weeks.dart';
+import 'package:ya_coursetable/ui/widgets/day_view.dart';
 import 'package:ya_coursetable/ui/widgets/schedule_switcher.dart';
-import 'package:ya_coursetable/ui/widgets/timetable_grid.dart';
 import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 
 import 'add_course_screen.dart';
 import 'import_screen.dart';
 
-/// 主界面：周数轴（多时间表）+ 周课表网格 + 多课表切换器（底部）。
+/// 主界面（Google Calendar 风格）：
+/// - 顶部周数轴（多时间表：选择第 N 周）
+/// - 中部“日视图”：时间轴 + 7 天列 + 课程卡片按钟点时间定位 + 当前时间线
+/// - 底部多课表切换器（多课表）
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
@@ -20,6 +23,24 @@ class MainScreen extends ConsumerStatefulWidget {
 
 class _MainScreenState extends ConsumerState<MainScreen> {
   int _week = 1;
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// “今天”：跳回当前周并滚动到视图顶部（Google Calendar 的“今天”按钮）。
+  void _goToday() {
+    final data = ref.read(appDataProvider).value ?? AppData();
+    final schedule = data.activeSchedule();
+    if (schedule == null) return;
+    final w = Weeks.currentWeek(DateTime.parse(schedule.semesterStartIso), DateTime.now());
+    if (w > 0) setState(() => _week = w);
+    _scroll.animateTo(0,
+        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +96,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               onSelect: (w) => setState(() => _week = w),
             ),
           const Divider(height: 1),
-          // 课表网格
+          // Google Calendar 风格日视图
           Expanded(
             child: schedule == null
                 ? Center(
@@ -89,7 +110,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                       ],
                     ),
                   )
-                : TimetableGrid(schedule: schedule, week: week),
+                : DayView(
+                    schedule: schedule,
+                    week: week,
+                    scrollController: _scroll,
+                  ),
           ),
           // 多课表切换器
           if (data.schedules.length > 1)
@@ -102,6 +127,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               },
             ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: '今天',
+        onPressed: _goToday,
+        child: const Icon(Icons.today),
       ),
     );
   }

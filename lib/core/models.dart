@@ -188,6 +188,35 @@ class ScheduleSettings {
       };
 }
 
+/// Clock time window of one class period (minutes since midnight).
+class PeriodTime {
+  final int startMin;
+  final int endMin;
+
+  const PeriodTime({required this.startMin, required this.endMin});
+
+  /// 国内高校常见作息默认节次时间（可被课表覆盖）。
+  static List<PeriodTime> defaultTimes() => [
+    const PeriodTime(startMin: 480, endMin: 530), // 08:00-08:50
+    const PeriodTime(startMin: 540, endMin: 590), // 09:00-09:50
+    const PeriodTime(startMin: 610, endMin: 660), // 10:10-11:00
+    const PeriodTime(startMin: 670, endMin: 720), // 11:10-12:00
+    const PeriodTime(startMin: 840, endMin: 890), // 14:00-14:50
+    const PeriodTime(startMin: 900, endMin: 950), // 15:00-15:50
+    const PeriodTime(startMin: 960, endMin: 1010), // 16:00-16:50
+    const PeriodTime(startMin: 1020, endMin: 1070), // 17:00-17:50
+    const PeriodTime(startMin: 1140, endMin: 1190), // 19:00-19:50
+    const PeriodTime(startMin: 1200, endMin: 1250), // 20:00-20:50
+  ];
+
+  static PeriodTime fromJson(Map<String, dynamic> json) => PeriodTime(
+        startMin: (json['startMin'] as num).toInt(),
+        endMin: (json['endMin'] as num).toInt(),
+      );
+
+  Map<String, dynamic> toJson() => {'startMin': startMin, 'endMin': endMin};
+}
+
 class Schedule {
   final String id;
   final String name;
@@ -197,6 +226,7 @@ class Schedule {
   final ScheduleSettings settings;
   final List<Course> courses;
   final List<WeekPlan> weekPlans;
+  final List<PeriodTime> periodTimes;
 
   Schedule({
     required this.id,
@@ -206,9 +236,11 @@ class Schedule {
     ScheduleSettings? settings,
     List<Course>? courses,
     List<WeekPlan>? weekPlans,
+    List<PeriodTime>? periodTimes,
   })  : settings = settings ?? ScheduleSettings(),
         courses = courses ?? [],
-        weekPlans = weekPlans ?? [];
+        weekPlans = weekPlans ?? [],
+        periodTimes = periodTimes ?? PeriodTime.defaultTimes();
 
   static Schedule fromJson(Map<String, dynamic> json) {
     return Schedule(
@@ -227,6 +259,10 @@ class Schedule {
               ?.map((e) => WeekPlan.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      periodTimes: (json['periodTimes'] as List?)
+              ?.map((e) => PeriodTime.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          PeriodTime.defaultTimes(),
     );
   }
 
@@ -238,6 +274,7 @@ class Schedule {
         'settings': settings.toJson(),
         'courses': courses.map((c) => c.toJson()).toList(),
         'weekPlans': weekPlans.map((p) => p.toJson()).toList(),
+        'periodTimes': periodTimes.map((p) => p.toJson()).toList(),
       };
 }
 
