@@ -7,6 +7,7 @@ import 'package:ya_coursetable/ui/widgets/schedule_switcher.dart';
 import 'package:ya_coursetable/ui/widgets/timetable_grid.dart';
 import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 
+import 'add_course_screen.dart';
 import 'import_screen.dart';
 
 /// 主界面：周数轴（多时间表）+ 周课表网格 + 多课表切换器（底部）。
@@ -37,7 +38,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: '添加课程',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddCourseScreen()),
+              );
+            },
           ),
           IconButton(
             icon: Icon(Icons.file_download),
