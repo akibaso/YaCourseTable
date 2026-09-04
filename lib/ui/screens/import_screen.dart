@@ -2,9 +2,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/import_service.dart';
 import 'package:ya_coursetable/core/models.dart';
-// dart:convert is used by ImportService (backup JSON), kept here for parity.
 
 /// Parsed file selection result (injected for tests).
 typedef FilePickerResult = ({String name, List<int> bytes});
@@ -94,9 +94,15 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
             )..courses.addAll(result.courses),
           ],
         );
-    // TODO(Task 5/6 wiring): persist into the global AppData provider
-    // once a state provider exists. For now the parsed data stays in
-    // memory; the JSON storage layer is wired in Task 4.
+    // 持久化到全局 AppData（多课表）：备份文件恢复整个 AppData，
+    // 课程类导入则新建一个课表并把解析结果写进去。
+    if (result.isBackup) {
+      ref.read(appDataProvider.notifier).saveAll(data);
+    } else {
+      for (final s in data.schedules) {
+        ref.read(appDataProvider.notifier).addSchedule(s);
+      }
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

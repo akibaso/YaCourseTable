@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ya_coursetable/core/app_state.dart';
+import 'package:ya_coursetable/core/models.dart';
 
-/// Main timetable screen. Full implementation lands in Task 4;
-/// this skeleton keeps the app booting and gives CI something to analyze.
-class MainScreen extends StatelessWidget {
+import 'import_screen.dart';
+
+/// 主界面：周课表网格（Task 4 完整网格在此之后填充）。
+/// 当前提供：顶部工具栏（添加/导入/导出/更多）、多课表切换器、周数轴骨架。
+class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final dataAsync = ref.watch(appDataProvider);
+    final data = dataAsync.value ?? AppData();
+    final schedule = data.activeSchedule();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('YaCourseTable'),
+        title: Text(schedule?.name ?? 'YaCourseTable'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -20,7 +29,11 @@ class MainScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.file_download),
             tooltip: '导入课表',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ImportScreen()),
+              );
+            },
           ),
           IconButton(
             icon: Icon(Icons.file_upload),
@@ -34,16 +47,38 @@ class MainScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.calendar_month, size: 64, color: scheme.primary),
-            const SizedBox(height: 12),
-            Text('课表加载中…', style: TextStyle(color: scheme.onSurfaceVariant)),
-          ],
-        ),
-      ),
+      body: dataAsync.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_month, size: 64, color: scheme.primary),
+                  const SizedBox(height: 12),
+                  Text(
+                    '周数轴 / 课表网格（Task 4）',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 8),
+                  if (data.schedules.length > 1)
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final s in data.schedules)
+                          ActionChip(
+                            label: Text(s.name),
+                            backgroundColor: s.id == schedule?.id
+                                ? scheme.secondaryContainer
+                                : null,
+                            onPressed: () {
+                              ref.read(appDataProvider.notifier).setActiveSchedule(s.id);
+                            },
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
     );
   }
 }

@@ -21,8 +21,7 @@ void main() {
     expect(find.byTooltip('导入课表'), findsOneWidget);
     expect(find.byTooltip('导出课表'), findsOneWidget);
     expect(find.byTooltip('更多功能'), findsOneWidget);
-    // Placeholder body.
-    expect(find.text('课表加载中…'), findsOneWidget);
-    expect(find.text('YaCourseTable'), findsOneWidget);
+    // Placeholder body text.
+    expect(find.text('周数轴 / 课表网格（Task 4）'), findsOneWidget);
   });
 }
