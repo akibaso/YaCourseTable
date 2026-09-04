@@ -10,6 +10,7 @@ import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 import 'add_course_screen.dart';
 import 'export_screen.dart';
 import 'import_screen.dart';
+import 'settings_screen.dart';
 
 /// 主界面（Google Calendar 风格）：
 /// - 顶部周数轴（多时间表：选择第 N 周）
@@ -87,7 +88,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           IconButton(
             icon: const Icon(Icons.more_vert),
             tooltip: '更多功能',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
           ),
         ],
       ),

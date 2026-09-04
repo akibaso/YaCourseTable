@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/ya_widget_bg"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/next_class_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="暂无课程"
+        android:textColor="#1B1B1F"
+        android:textSize="15sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/next_class_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text=""
+        android:textColor="#5B6472"
+        android:textSize="12sp"/>
+</LinearLayout>

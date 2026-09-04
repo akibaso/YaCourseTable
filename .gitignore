@@ -40,3 +40,4 @@ ios/Xcode/
 ios/.swiftpm/
 ios/Flutter/
 build/
+plugins/*/android/local.properties

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateNotifier, StateNotifierProvider, StateProvider;
 
+import 'desktop_widget_service.dart';
 import 'models.dart';
 import 'storage.dart';
 
@@ -86,6 +89,18 @@ class AppDataNotifier extends StateNotifier<AsyncValue<AppData>> {
 
   Future<void> saveAll(AppData data) => _save(data);
 
+  /// 更新全局设置（主题 / 提醒开关 / 提醒提前量）。
+  Future<void> updateSettings(AppSettings settings) async {
+    final data = state.value;
+    if (data == null) return;
+    await _save(AppData(
+      activeScheduleId: data.activeScheduleId,
+      activeWeekPlanId: data.activeWeekPlanId,
+      schedules: data.schedules,
+      settings: settings,
+    ));
+  }
+
   Future<void> _save(AppData data) async {
     state = AsyncValue.data(data);
     final saved = _saved;
@@ -93,5 +108,7 @@ class AppDataNotifier extends StateNotifier<AsyncValue<AppData>> {
     if (path != null && path.isNotEmpty) {
       await Storage.save(path, data);
     }
+    // 数据变化时同步桌面小部件（fire-and-forget，失败不影响 UI）。
+    unawaited(DesktopWidgetService.update(data));
   }
 }

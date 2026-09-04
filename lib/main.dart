@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ya_coursetable/app_theme.dart';
 import 'package:ya_coursetable/core/app_state.dart';
+import 'package:ya_coursetable/core/desktop_widget_service.dart';
+import 'package:ya_coursetable/core/models.dart';
+import 'package:ya_coursetable/core/notification_service.dart';
 import 'package:ya_coursetable/ui/screens/main_screen.dart';
 
 void main() {
@@ -34,13 +37,25 @@ class _YaCourseTableAppState extends ConsumerState<YaCourseTableApp> {
     final path = File('${dir.path}/app_data.json').path;
     if (!mounted) return;
     await ref.read(appDataProvider.notifier).setPath(path);
+    // 初始化课程提醒通知，并为接下来的课程安排本地通知。
+    await NotificationService.init();
+    final data = ref.read(appDataProvider).value ?? AppData();
+    await NotificationService.syncReminders(data);
+    // 启动时同步桌面小部件。
+    await DesktopWidgetService.update(data);
   }
 
   @override
   Widget build(BuildContext context) {
+    final data = ref.watch(appDataProvider).value;
+    final themeMode = data?.settings.themeMode ?? 'system';
+    var mode = ThemeMode.system;
+    if (themeMode == 'light') mode = ThemeMode.light;
+    if (themeMode == 'dark') mode = ThemeMode.dark;
     return MaterialApp(
       title: 'YaCourseTable',
       debugShowCheckedModeBanner: false,
+      themeMode: mode,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       home: const MainScreen(),
