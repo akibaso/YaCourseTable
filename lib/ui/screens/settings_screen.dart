@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
 import 'package:ya_coursetable/core/notification_service.dart';
+import 'package:ya_coursetable/ui/screens/period_times_screen.dart';
 import 'package:ya_coursetable/ui/screens/schedules_screen.dart';
+import 'package:ya_coursetable/ui/screens/week_plans_screen.dart';
 
 /// 设置（更多功能）：课程提醒开关与提前量、主题模式（MD3 控件）。
 class SettingsScreen extends ConsumerWidget {
@@ -95,6 +97,26 @@ class SettingsScreen extends ConsumerWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SchedulesScreen()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.timer),
+                  title: const Text('编辑时间表'),
+                  subtitle: const Text('节次时间 / 每节时长（24 小时制）'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PeriodTimesScreen()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.calendar_view_week),
+                  title: const Text('多时间表'),
+                  subtitle: const Text('创建 / 切换 / 删除具名时间表，按周范围过滤课程'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const WeekPlansScreen()),
                     );
                   },
                 ),

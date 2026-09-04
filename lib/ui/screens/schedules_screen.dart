@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
+import 'package:ya_coursetable/ui/screens/period_times_screen.dart';
 
 /// 多课表管理：新建 / 重命名 / 改开学日期 / 改总周数 / 删除 / 切换。
 class SchedulesScreen extends ConsumerStatefulWidget {
@@ -108,6 +109,15 @@ class _SchedulesScreenState extends ConsumerState<SchedulesScreen> {
                             icon: const Icon(Icons.edit),
                             tooltip: '编辑课表',
                             onPressed: () => _editSchedule(s),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.timer),
+                            tooltip: '编辑时间表',
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => PeriodTimesScreen(schedule: s)));
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline),

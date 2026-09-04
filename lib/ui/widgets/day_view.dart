@@ -15,11 +15,15 @@ class DayView extends StatelessWidget {
   final int week;
   final ScrollController? scrollController;
 
+  /// 活动的多时间表（WeekPlan）：非空时只展示该时间表周范围内的课程。
+  final WeekPlan? plan;
+
   const DayView({
     super.key,
     required this.schedule,
     required this.week,
     this.scrollController,
+    this.plan,
   });
 
   static const double pxPerHour = 48.0;
@@ -185,7 +189,8 @@ class DayView extends StatelessWidget {
     final isToday = day == now.weekday;
     final columnSlots = [
       for (final (course, slot) in Weeks.slotsForWeek(schedule, week))
-        if (slot.dayOfWeek == day) (course, slot),
+        if (slot.dayOfWeek == day && _slotVisibleInPlan(slot, week, plan))
+          (course, slot),
     ];
 
     return Stack(
@@ -310,6 +315,17 @@ class DayView extends StatelessWidget {
   String _dateOf(int day) {
     final date = _mondayOfWeek().add(Duration(days: day - 1));
     return '${date.month}/${date.day}';
+  }
+
+  /// 选中多时间表后，只展示课程周次与时间表周范围有交叠的课程。
+  static bool _slotVisibleInPlan(TimeSlot slot, int week, WeekPlan? plan) {
+    if (plan == null) return true;
+    if (!Weeks.weekInPlan(week, plan)) return false;
+    for (var w = plan.weekStart; w <= plan.weekEnd; w++) {
+      if (!Weeks.weekInPlan(w, plan)) continue;
+      if (slot.weekSpec.contains(w)) return true;
+    }
+    return false;
   }
 }
 

@@ -103,6 +103,42 @@ class AppDataNotifier extends StateNotifier<AsyncValue<AppData>> {
     ));
   }
 
+  /// 在指定课表下新增时间表（多时间表），并设为活动。
+  Future<void> addWeekPlan(String scheduleId, WeekPlan plan) async {
+    final data = state.value;
+    if (data == null) return;
+    final schedules = [
+      for (final s in data.schedules)
+        s.id == scheduleId ? s.copyWith(weekPlans: [...s.weekPlans, plan]) : s,
+    ];
+    await _save(AppData(
+      activeScheduleId: data.activeScheduleId,
+      activeWeekPlanId: plan.id,
+      schedules: schedules,
+      settings: data.settings,
+    ));
+  }
+
+  /// 删除指定课表下的某个时间表；若为活动则清空活动标记。
+  Future<void> deleteWeekPlan(String scheduleId, String planId) async {
+    final data = state.value;
+    if (data == null) return;
+    var activePlanId = data.activeWeekPlanId;
+    if (activePlanId == planId) activePlanId = '';
+    final schedules = [
+      for (final s in data.schedules)
+        s.id == scheduleId
+            ? s.copyWith(weekPlans: [for (final p in s.weekPlans) if (p.id != planId) p])
+            : s,
+    ];
+    await _save(AppData(
+      activeScheduleId: data.activeScheduleId,
+      activeWeekPlanId: activePlanId,
+      schedules: schedules,
+      settings: data.settings,
+    ));
+  }
+
   Future<void> saveAll(AppData data) => _save(data);
 
   /// 更新全局设置（主题 / 提醒开关 / 提醒提前量）。

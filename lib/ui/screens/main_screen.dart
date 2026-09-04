@@ -104,6 +104,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         week == math.max(
             Weeks.currentWeek(DateTime.parse(schedule.semesterStartIso), DateTime.now()), 1);
 
+    // 活动的多时间表（WeekPlan）：选中后主界面只显示其周范围内的课程。
+    WeekPlan? activePlan;
+    if (schedule != null && data.activeWeekPlanId.isNotEmpty) {
+      for (final p in schedule.weekPlans) {
+        if (p.id == data.activeWeekPlanId) {
+          activePlan = p;
+          break;
+        }
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(schedule?.name ?? 'YaCourseTable'),
@@ -157,7 +168,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ),
           const Divider(height: 1),
           // 今日课程条（今日视图：名称/时间/老师/地址一目了然）
-          if (schedule != null && isCurrentWeek) TodayStrip(schedule: schedule, week: week),
+          if (schedule != null && isCurrentWeek)
+            TodayStrip(schedule: schedule, week: week, plan: activePlan),
           // Google Calendar 风格日视图：左右滑动切换周
           Expanded(
             child: schedule == null
@@ -185,6 +197,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                           schedule: schedule,
                           week: w,
                           scrollController: w == week ? _scroll : null,
+                          plan: activePlan,
                         ),
                     ],
                   ),

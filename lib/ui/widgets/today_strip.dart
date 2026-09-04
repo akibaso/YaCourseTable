@@ -6,8 +6,9 @@ import 'package:ya_coursetable/core/weeks.dart';
 class TodayStrip extends StatelessWidget {
   final Schedule schedule;
   final int week;
+  final WeekPlan? plan;
 
-  const TodayStrip({super.key, required this.schedule, required this.week});
+  const TodayStrip({super.key, required this.schedule, required this.week, this.plan});
 
   static String _fmtTime(int minutes) {
     final h = (minutes ~/ 60).toString().padLeft(2, '0');
@@ -20,7 +21,7 @@ class TodayStrip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     final today = DateTime.now().weekday; // 1=周一
-    final items = _todayClasses(schedule, week, today);
+    final items = _todayClasses(schedule, week, today, plan);
     if (items.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
@@ -79,15 +80,26 @@ class TodayStrip extends StatelessWidget {
     );
   }
 
-  static List<(Course, int, int)> _todayClasses(Schedule schedule, int week, int day) {
+  static List<(Course, int, int)> _todayClasses(Schedule schedule, int week, int day, WeekPlan? plan) {
     final times = schedule.periodTimes;
     final result = <(Course, int, int)>[];
     for (final (course, slot) in Weeks.slotsForWeek(schedule, week)) {
-      if (slot.dayOfWeek == day) {
+      if (slot.dayOfWeek == day && _slotVisibleInPlan(slot, week, plan)) {
         result.add((course, times[slot.startPeriod - 1].startMin, times[slot.endPeriod - 1].endMin));
       }
     }
     result.sort((a, b) => a.$2.compareTo(b.$2));
     return result;
+  }
+
+  /// 选中多时间表后，只展示课程周次与时间表周范围有交叠的课程。
+  static bool _slotVisibleInPlan(TimeSlot slot, int week, WeekPlan? plan) {
+    if (plan == null) return true;
+    if (!Weeks.weekInPlan(week, plan)) return false;
+    for (var w = plan.weekStart; w <= plan.weekEnd; w++) {
+      if (!Weeks.weekInPlan(w, plan)) continue;
+      if (slot.weekSpec.contains(w)) return true;
+    }
+    return false;
   }
 }
