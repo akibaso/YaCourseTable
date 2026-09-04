@@ -8,6 +8,7 @@ import 'package:ya_coursetable/ui/widgets/schedule_switcher.dart';
 import 'package:ya_coursetable/ui/widgets/week_axis.dart';
 
 import 'add_course_screen.dart';
+import 'export_screen.dart';
 import 'import_screen.dart';
 
 /// 主界面（Google Calendar 风格）：
@@ -77,7 +78,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           IconButton(
             icon: Icon(Icons.file_upload),
             tooltip: '导出课表',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ExportScreen()),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
