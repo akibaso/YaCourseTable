@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/legacy.dart' show StateNotifier, StateNotifierP
 
 import 'desktop_widget_service.dart';
 import 'models.dart';
+import 'notification_service.dart';
 import 'storage.dart';
 
 /// Path of the shared JSON file (document dir) — resolved by the caller
@@ -46,6 +47,21 @@ class AppDataNotifier extends StateNotifier<AsyncValue<AppData>> {
     final schedules = [...data.schedules, schedule];
     await _save(AppData(
       activeScheduleId: schedule.id,
+      activeWeekPlanId: data.activeWeekPlanId,
+      schedules: schedules,
+      settings: data.settings,
+    ));
+  }
+
+  /// Delete a schedule; if it was active, fall back to the first remaining one.
+  Future<void> deleteSchedule(String id) async {
+    final data = state.value;
+    if (data == null) return;
+    final schedules = [for (final s in data.schedules) if (s.id != id) s];
+    var activeId = data.activeScheduleId;
+    if (activeId == id && schedules.isNotEmpty) activeId = schedules.first.id;
+    await _save(AppData(
+      activeScheduleId: activeId,
       activeWeekPlanId: data.activeWeekPlanId,
       schedules: schedules,
       settings: data.settings,
@@ -108,7 +124,17 @@ class AppDataNotifier extends StateNotifier<AsyncValue<AppData>> {
     if (path != null && path.isNotEmpty) {
       await Storage.save(path, data);
     }
-    // 数据变化时同步桌面小部件（fire-and-forget，失败不影响 UI）。
+    // 数据变化时同步桌面小部件与课程提醒（fire-and-forget，失败不影响 UI）。
     unawaited(DesktopWidgetService.update(data));
+    unawaited(_syncRemindersQuietly(data));
+  }
+
+  /// 测试环境没有通知插件通道，捕获静默失败。
+  Future<void> _syncRemindersQuietly(AppData data) async {
+    try {
+      await NotificationService.syncReminders(data);
+    } catch (_) {
+      // No notification plugin channel in tests — fail silently.
+    }
   }
 }

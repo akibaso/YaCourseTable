@@ -102,7 +102,7 @@ class _EasWebviewScreenState extends ConsumerState<EasWebviewScreen> {
       final monday = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
       final schedule = Schedule(
         id: 'sched_${DateTime.now().millisecondsSinceEpoch}',
-        name: '教务导入',
+        name: _scheduleNameFromUrl(),
         semesterStartIso: '${monday.year}-${monday.month.toString().padLeft(2, '0')}-${monday.day.toString().padLeft(2, '0')}',
       )..courses.addAll(courses);
       await ref.read(appDataProvider.notifier).addSchedule(schedule);
@@ -117,6 +117,19 @@ class _EasWebviewScreenState extends ConsumerState<EasWebviewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('抓取失败：$e')),
       );
+    }
+  }
+
+  /// 课表名称用教务系统域名，避免所有导入都叫“教务导入”。
+  String _scheduleNameFromUrl() {
+    final text = _urlCtrl.text.trim();
+    if (text.isEmpty) return '教务导入';
+    try {
+      final uri = Uri.parse(text.startsWith('http') ? text : 'https://$text');
+      if (uri.host.isEmpty) return '教务导入';
+      return '${uri.host} 课表';
+    } catch (_) {
+      return '教务导入';
     }
   }
 

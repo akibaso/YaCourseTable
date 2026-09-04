@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import '../core/models.dart';
 import '../parsers/csv_parser.dart';
-import '../parsers/eas_parser.dart';
 import '../parsers/excel_parser.dart';
 import '../parsers/html_parser.dart';
 import '../parsers/pdf_parser.dart';
@@ -34,22 +33,6 @@ class ImportResult {
 /// - 从文件（PDF / Excel / CSV / HTML / 备份 JSON）解析
 /// - 从分享口令（base64 JSON）导入
 class ImportService {
-  /// Fetch a course page from a school EAS (教务系统) and parse it.
-  Future<ImportResult> importFromEas(String url, String easType) async {
-    try {
-      final courses = await EasParser.parseUrl(url, 'new_schedule', easType: easType);
-      if (courses.isEmpty) {
-        return const ImportResult(message: '未能从教务页面解析出课程，请检查链接是否正确。');
-      }
-      return ImportResult(
-        courses: courses,
-        message: '成功解析 ${courses.length} 门课程。',
-      );
-    } catch (e) {
-      return ImportResult(message: '抓取失败：$e');
-    }
-  }
-
   /// Parse an imported file by its name/extension.
   ImportResult importFromFileBytes(String name, List<int> bytes) {
     return _parseFileDispatch(name, bytes);

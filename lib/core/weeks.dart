@@ -23,12 +23,27 @@ class Weeks {
   /// Courses that run on [dayOfWeek] during [week] within [schedule].
   static List<Course> coursesForDay(Schedule schedule, int week, int dayOfWeek) {
     final result = <Course>[];
+    for (final (course, slot) in slotsForWeek(schedule, week)) {
+      if (slot.dayOfWeek == dayOfWeek) {
+        if (!result.any((c) => c.id == course.id)) result.add(course);
+      }
+    }
+    return result;
+  }
+
+  /// All (course, slot) pairs that run during [week], validated against
+  /// the schedule's period times. Shared by ICS 导出 / 课程提醒 / 日视图，
+  /// 避免各处重复实现同一套展开逻辑。
+  static List<(Course, TimeSlot)> slotsForWeek(Schedule schedule, int week) {
+    final times = schedule.periodTimes;
+    final result = <(Course, TimeSlot)>[];
     for (final course in schedule.courses) {
       for (final slot in course.timeSlots) {
-        if (slot.dayOfWeek == dayOfWeek && weekInRange(week, slot.weekSpec)) {
-          result.add(course);
-          break;
-        }
+        if (slot.dayOfWeek < 1 || slot.dayOfWeek > 7) continue;
+        if (!slot.weekSpec.contains(week)) continue;
+        if (slot.startPeriod < 1 || slot.startPeriod > times.length) continue;
+        if (slot.endPeriod < slot.startPeriod || slot.endPeriod > times.length) continue;
+        result.add((course, slot));
       }
     }
     return result;

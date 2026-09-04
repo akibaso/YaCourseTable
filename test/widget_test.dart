@@ -30,9 +30,10 @@ void main() {
     expect(find.byTooltip('添加课程'), findsOneWidget);
     expect(find.byTooltip('导入课表'), findsOneWidget);
     expect(find.byTooltip('导出课表'), findsOneWidget);
-    expect(find.byTooltip('今天'), findsOneWidget);
+    expect(find.byTooltip('选择周'), findsOneWidget);
     expect(find.byType(WeekAxis), findsOneWidget);
-    expect(find.byType(DayView), findsOneWidget);
+    // PageView 会构建当前页与相邻页的 DayView（≥1 个）
+    expect(find.byType(DayView), findsWidgets);
     expect(find.byType(ScheduleSwitcher), findsOneWidget);
     expect(find.text('第二课表'), findsOneWidget);
   });

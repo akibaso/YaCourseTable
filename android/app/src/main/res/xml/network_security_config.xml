@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 允许明文（HTTP）流量：教务系统多为 HTTP，WebView 登录时不再报 "cleartext not permitted" -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true"/>
+</network-security-config>

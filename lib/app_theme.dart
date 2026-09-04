@@ -8,6 +8,18 @@ class AppTheme {
 
   static ThemeData dark() => _base(Brightness.dark);
 
+  /// 配置字符串（'system'/'light'/'dark'）到 ThemeMode 的唯一转换点。
+  static ThemeMode themeModeFromName(String name) {
+    switch (name) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
   static ThemeData _base(Brightness brightness) {
     final scheme = ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
     return ThemeData(

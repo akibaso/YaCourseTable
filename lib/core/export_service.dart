@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'models.dart';
+import 'weeks.dart';
 import '../parsers/shared_link_parser.dart';
 
 /// 导出课表：备份 JSON / ICS 日历文件 / 分享口令。
@@ -30,29 +31,23 @@ class ExportService {
       final start = DateTime.parse(schedule.semesterStartIso);
       final times = schedule.periodTimes;
       for (var w = 1; w <= schedule.totalWeeks; w++) {
-        for (final course in schedule.courses) {
-          for (final slot in course.timeSlots) {
-            if (slot.dayOfWeek < 1 || slot.dayOfWeek > 7) continue;
-            if (!slot.weekSpec.contains(w)) continue;
-            if (slot.startPeriod < 1 || slot.startPeriod > times.length) continue;
-            if (slot.endPeriod < slot.startPeriod || slot.endPeriod > times.length) continue;
-            final days = (w - 1) * 7 + (slot.dayOfWeek - 1);
-            final date = start.add(Duration(days: days));
-            lines.add('BEGIN:VEVENT');
-            lines.add('UID:${course.id}-w$w-d${slot.dayOfWeek}@yacoursetable');
-            lines.add('DTSTART:${_icsDate(date)}T${_icsTime(times[slot.startPeriod - 1].startMin)}');
-            lines.add('DTEND:${_icsDate(date)}T${_icsTime(times[slot.endPeriod - 1].endMin)}');
-            lines.add('SUMMARY:${_icsEscape(course.name)}');
-            final desc = [
-              if (course.teacher != null) '教师:${_icsEscape(course.teacher!)}',
-              if (course.venue != null) '地点:${_icsEscape(course.venue!)}',
-              if (slot.weekSpec.describe().isNotEmpty) _icsEscape(slot.weekSpec.describe()),
-            ].where((s) => s.isNotEmpty).join('\n');
-            if (desc.isNotEmpty) {
-              lines.add('DESCRIPTION:${_icsEscape(desc)}');
-            }
-            lines.add('END:VEVENT');
+        for (final (course, slot) in Weeks.slotsForWeek(schedule, w)) {
+          final days = (w - 1) * 7 + (slot.dayOfWeek - 1);
+          final date = start.add(Duration(days: days));
+          lines.add('BEGIN:VEVENT');
+          lines.add('UID:${course.id}-w$w-d${slot.dayOfWeek}@yacoursetable');
+          lines.add('DTSTART:${_icsDate(date)}T${_icsTime(times[slot.startPeriod - 1].startMin)}');
+          lines.add('DTEND:${_icsDate(date)}T${_icsTime(times[slot.endPeriod - 1].endMin)}');
+          lines.add('SUMMARY:${_icsEscape(course.name)}');
+          final desc = [
+            if (course.teacher != null) '教师:${_icsEscape(course.teacher!)}',
+            if (course.venue != null) '地点:${_icsEscape(course.venue!)}',
+            if (slot.weekSpec.describe().isNotEmpty) _icsEscape(slot.weekSpec.describe()),
+          ].where((s) => s.isNotEmpty).join('\n');
+          if (desc.isNotEmpty) {
+            lines.add('DESCRIPTION:${_icsEscape(desc)}');
           }
+          lines.add('END:VEVENT');
         }
       }
     }
@@ -72,7 +67,10 @@ class ExportService {
     return '$h${m}00';
   }
 
-  /// ICS 文本转义：反斜杠与逗号/分号。
+  /// ICS 文本转义：反斜杠、逗号、分号与换行（分号不转义会导致 Google 日历截断 DESCRIPTION）。
   static String _icsEscape(String s) =>
-      s.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll('\n', '\\n');
+      s.replaceAll('\\', '\\\\')
+          .replaceAll(',', '\\,')
+          .replaceAll(';', '\\;')
+          .replaceAll('\n', '\\n');
 }

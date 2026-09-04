@@ -14,31 +14,22 @@ class DesktopWidgetService {
   static Future<void> update(AppData data) async {
     try {
       final occurrences = NotificationService.nextOccurrences(data, 1);
-      if (occurrences.isEmpty) {
-        await FlutterAppWidget.setWidgetDataAndUpdate(
-          key: 'course_name',
-          value: '暂无课程',
-          androidWidgetProviderClass: providerClass,
-        );
-        await FlutterAppWidget.setWidgetDataAndUpdate(
-          key: 'course_time',
-          value: '',
-          androidWidgetProviderClass: providerClass,
-        );
-        return;
+      final next = occurrences.isEmpty ? null : occurrences.first;
+      final name = next == null ? '暂无课程' : next.courseName;
+      String time = '';
+      if (next != null) {
+        final at = next.start;
+        time =
+            '${at.month}/${at.day} ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
       }
-      final occ = occurrences.first;
-      final at = occ.start;
-      final timeStr =
-          '${at.month}/${at.day} ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
       await FlutterAppWidget.setWidgetDataAndUpdate(
         key: 'course_name',
-        value: occ.courseName,
+        value: name,
         androidWidgetProviderClass: providerClass,
       );
       await FlutterAppWidget.setWidgetDataAndUpdate(
         key: 'course_time',
-        value: timeStr,
+        value: time,
         androidWidgetProviderClass: providerClass,
       );
     } catch (_) {

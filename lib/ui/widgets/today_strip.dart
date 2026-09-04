@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:ya_coursetable/core/models.dart';
+import 'package:ya_coursetable/core/weeks.dart';
+
+/// 今日课程条（今日视图）：把今天的每门课的 名称/时间/老师/地址 横向排开，一目了然。
+class TodayStrip extends StatelessWidget {
+  final Schedule schedule;
+  final int week;
+
+  const TodayStrip({super.key, required this.schedule, required this.week});
+
+  static String _fmtTime(int minutes) {
+    final h = (minutes ~/ 60).toString().padLeft(2, '0');
+    final m = (minutes % 60).toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final t = Theme.of(context).textTheme;
+    final today = DateTime.now().weekday; // 1=周一
+    final items = _todayClasses(schedule, week, today);
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 76,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final course = items[i].$1;
+          final info = [
+            if (course.teacher != null) course.teacher!,
+            if (course.venue != null) course.venue!,
+          ].join(' · ');
+          final timeRange =
+              '${_fmtTime(items[i].$2)}-${_fmtTime(items[i].$3)}';
+          return Container(
+            width: 180,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  timeRange,
+                  style: t.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  course.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.labelMedium?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (info.isNotEmpty)
+                  Text(
+                    info,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  static List<(Course, int, int)> _todayClasses(Schedule schedule, int week, int day) {
+    final times = schedule.periodTimes;
+    final result = <(Course, int, int)>[];
+    for (final (course, slot) in Weeks.slotsForWeek(schedule, week)) {
+      if (slot.dayOfWeek == day) {
+        result.add((course, times[slot.startPeriod - 1].startMin, times[slot.endPeriod - 1].endMin));
+      }
+    }
+    result.sort((a, b) => a.$2.compareTo(b.$2));
+    return result;
+  }
+}

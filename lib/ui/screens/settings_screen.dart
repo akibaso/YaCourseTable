@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
 import 'package:ya_coursetable/core/notification_service.dart';
+import 'package:ya_coursetable/ui/screens/schedules_screen.dart';
 
 /// 设置（更多功能）：课程提醒开关与提前量、主题模式（MD3 控件）。
 class SettingsScreen extends ConsumerWidget {
@@ -38,12 +39,7 @@ class SettingsScreen extends ConsumerWidget {
                 SwitchListTile(
                   title: const Text('上课前提醒'),
                   value: settings.remindersEnabled,
-                  onChanged: (v) => update(
-                      AppSettings(
-                        themeMode: settings.themeMode,
-                        reminderLeadMinutes: settings.reminderLeadMinutes,
-                        remindersEnabled: v,
-                      )),
+                  onChanged: (v) => update(settings.copyWith(remindersEnabled: v)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -59,11 +55,7 @@ class SettingsScreen extends ConsumerWidget {
                       DropdownMenuEntry(value: 30, label: '30 分钟'),
                     ],
                     onSelected: (v) => update(
-                        AppSettings(
-                          themeMode: settings.themeMode,
-                          reminderLeadMinutes: v ?? settings.reminderLeadMinutes,
-                          remindersEnabled: settings.remindersEnabled,
-                        )),
+                        settings.copyWith(reminderLeadMinutes: v ?? settings.reminderLeadMinutes)),
                   ),
                 ),
               ],
@@ -84,13 +76,27 @@ class SettingsScreen extends ConsumerWidget {
                       DropdownMenuEntry(value: 'light', label: '浅色'),
                       DropdownMenuEntry(value: 'dark', label: '深色'),
                     ],
-                    onSelected: (v) => update(
-                        AppSettings(
-                          themeMode: v ?? settings.themeMode,
-                          reminderLeadMinutes: settings.reminderLeadMinutes,
-                          remindersEnabled: settings.remindersEnabled,
-                        )),
+                    onSelected: (v) => update(settings.copyWith(themeMode: v ?? settings.themeMode)),
                   ),
+                ),
+              ],
+            ),
+          ),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Column(
+              children: [
+                sectionHeader(context, '课表'),
+                ListTile(
+                  leading: const Icon(Icons.table_view),
+                  title: const Text('管理课表'),
+                  subtitle: Text(
+                      '${data.schedules.length} 个课表：新建 / 重命名 / 开学日期 / 周数 / 删除'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SchedulesScreen()),
+                    );
+                  },
                 ),
               ],
             ),

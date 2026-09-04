@@ -49,13 +49,10 @@ class _YaCourseTableAppState extends ConsumerState<YaCourseTableApp> {
   Widget build(BuildContext context) {
     final data = ref.watch(appDataProvider).value;
     final themeMode = data?.settings.themeMode ?? 'system';
-    var mode = ThemeMode.system;
-    if (themeMode == 'light') mode = ThemeMode.light;
-    if (themeMode == 'dark') mode = ThemeMode.dark;
     return MaterialApp(
       title: 'YaCourseTable',
       debugShowCheckedModeBanner: false,
-      themeMode: mode,
+      themeMode: AppTheme.themeModeFromName(themeMode),
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       home: const MainScreen(),

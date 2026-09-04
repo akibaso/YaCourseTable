@@ -242,6 +242,27 @@ class Schedule {
         weekPlans = weekPlans ?? [],
         periodTimes = periodTimes ?? PeriodTime.defaultTimes();
 
+  /// 不可变更新：保留未指定字段，避免调用方重述全部字段。
+  Schedule copyWith({
+    String? name,
+    String? semesterStartIso,
+    int? totalWeeks,
+    ScheduleSettings? settings,
+    List<Course>? courses,
+    List<WeekPlan>? weekPlans,
+    List<PeriodTime>? periodTimes,
+  }) =>
+      Schedule(
+        id: id,
+        name: name ?? this.name,
+        semesterStartIso: semesterStartIso ?? this.semesterStartIso,
+        totalWeeks: totalWeeks ?? this.totalWeeks,
+        settings: settings ?? this.settings,
+        courses: courses ?? this.courses,
+        weekPlans: weekPlans ?? this.weekPlans,
+        periodTimes: periodTimes ?? this.periodTimes,
+      );
+
   static Schedule fromJson(Map<String, dynamic> json) {
     return Schedule(
       id: json['id'] as String,
@@ -288,6 +309,18 @@ class AppSettings {
     this.reminderLeadMinutes = 5,
     this.remindersEnabled = true,
   });
+
+  /// 不可变更新：仅改指定字段。
+  AppSettings copyWith({
+    String? themeMode,
+    int? reminderLeadMinutes,
+    bool? remindersEnabled,
+  }) =>
+      AppSettings(
+        themeMode: themeMode ?? this.themeMode,
+        reminderLeadMinutes: reminderLeadMinutes ?? this.reminderLeadMinutes,
+        remindersEnabled: remindersEnabled ?? this.remindersEnabled,
+      );
 
   static AppSettings fromJson(Map<String, dynamic> json) => AppSettings(
         themeMode: (json['themeMode'] ?? 'system') as String,

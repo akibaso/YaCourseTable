@@ -27,6 +27,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
   final _shareCode = TextEditingController();
   late final TabController _tabs;
   final _import = ImportService();
+  String _importSource = '导入课表';
   bool _busy = false;
 
   @override
@@ -91,7 +92,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
           schedules: [
             Schedule(
               id: _newId(),
-              name: '导入课表',
+              name: _nameFromFile(_pickedFileName),
               semesterStartIso: _mondayOf(DateTime.now()),
             )..courses.addAll(result.courses),
           ],
@@ -114,6 +115,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
   }
 
   static String _newId() => 'sched_${DateTime.now().millisecondsSinceEpoch}';
+
+  /// 从文件名（去掉扩展名）派生课表名称；分享口令等场景用来源名。
+  String _nameFromFile(String? fileName) {
+    final fallback = _importSource;
+    if (fileName == null) return fallback;
+    var base = fileName;
+    final idx = base.lastIndexOf('.');
+    if (idx > 0) base = base.substring(0, idx);
+    return base.isEmpty ? fallback : base;
+  }
 
   static String _mondayOf(DateTime d) {
     final monday = d.subtract(Duration(days: d.weekday - 1));
@@ -277,6 +288,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
                     );
                     return;
                   }
+                  _importSource = '共享课表';
                   _runSync(() => _import.importFromShareCode(code));
                 },
           icon: const Icon(Icons.link),

@@ -37,7 +37,7 @@ class NotificationService {
     );
   }
 
-  /// 活动课表中接下来最多 [limit] 次课程开始事件。
+  /// 活动课表中接下来最多 [limit] 次课程开始事件（按开始时间升序）。
   static List<Occurrence> nextOccurrences(AppData data, int limit) {
     final schedule = data.activeSchedule();
     if (schedule == null || schedule.courses.isEmpty) return [];
@@ -46,26 +46,18 @@ class NotificationService {
     final currentWeek = Weeks.currentWeek(start, now);
     final times = schedule.periodTimes;
     final result = <Occurrence>[];
-    for (var w = math.max(currentWeek, 1);
-        w <= schedule.totalWeeks && result.length < limit;
-        w++) {
-      for (final course in schedule.courses) {
-        for (final slot in course.timeSlots) {
-          if (slot.dayOfWeek < 1 || slot.dayOfWeek > 7) continue;
-          if (!slot.weekSpec.contains(w)) continue;
-          if (slot.startPeriod < 1 || slot.startPeriod > times.length) continue;
-          if (slot.endPeriod < slot.startPeriod || slot.endPeriod > times.length) continue;
-          final dayOffset = (w - 1) * 7 + (slot.dayOfWeek - 1);
-          final at = start
-              .add(Duration(days: dayOffset))
-              .add(Duration(minutes: times[slot.startPeriod - 1].startMin));
-          if (!at.isAfter(now)) continue;
-          result.add(Occurrence(courseName: course.name, start: at));
-          if (result.length >= limit) break;
-        }
+    for (var w = math.max(currentWeek, 1); w <= schedule.totalWeeks; w++) {
+      for (final (course, slot) in Weeks.slotsForWeek(schedule, w)) {
+        final dayOffset = (w - 1) * 7 + (slot.dayOfWeek - 1);
+        final at = start
+            .add(Duration(days: dayOffset))
+            .add(Duration(minutes: times[slot.startPeriod - 1].startMin));
+        if (!at.isAfter(now)) continue;
+        result.add(Occurrence(courseName: course.name, start: at));
       }
     }
-    return result;
+    result.sort((a, b) => a.start.compareTo(b.start));
+    return result.take(limit).toList();
   }
 
   /// 同步提醒：先取消已排通知，再按提前量重新安排。

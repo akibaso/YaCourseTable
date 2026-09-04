@@ -179,11 +179,14 @@ class DayView extends StatelessWidget {
   Widget _buildDayColumn(BuildContext context, int d, double dayWidth, ColorScheme scheme) {
     final contentH = (lastHour - firstHour) * pxPerHour;
     final day = d + 1;
-    final courses = Weeks.coursesForDay(schedule, week, day);
     final now = DateTime.now();
     final isCurrentWeek =
         Weeks.currentWeek(DateTime.parse(schedule.semesterStartIso), now) == week;
     final isToday = day == now.weekday;
+    final columnSlots = [
+      for (final (course, slot) in Weeks.slotsForWeek(schedule, week))
+        if (slot.dayOfWeek == day) (course, slot),
+    ];
 
     return Stack(
       clipBehavior: Clip.hardEdge,
@@ -197,33 +200,31 @@ class DayView extends StatelessWidget {
             lineColor: scheme.outlineVariant,
           ),
         ),
-        for (final course in courses)
-          for (final slot in course.timeSlots)
-            if (slot.dayOfWeek == day && Weeks.weekInRange(week, slot.weekSpec))
-              _courseCard(context, course, slot, dayWidth, scheme),
+        for (final (course, slot) in columnSlots)
+          _courseCard(context, course, slot, dayWidth, scheme),
         if (isCurrentWeek && isToday)
           _nowIndicator(context, scheme),
       ],
     );
   }
 
-  /// 课程卡片：按 PeriodTime 的钟点时间定位。
+  /// 课程卡片：按 PeriodTime 的钟点时间定位，名称 / 老师·地址 / 周次常显。
   Widget _courseCard(BuildContext context, Course course, TimeSlot slot, double dayWidth, ColorScheme scheme) {
     final times = schedule.periodTimes;
-    if (slot.startPeriod < 1 || slot.startPeriod > times.length) return const SizedBox.shrink();
-    if (slot.endPeriod < slot.startPeriod || slot.endPeriod > times.length) {
-      return const SizedBox.shrink();
-    }
     final startMin = times[slot.startPeriod - 1].startMin;
     final endMin = times[slot.endPeriod - 1].endMin;
-    final top = (startMin - firstHour * 60) / 60 * pxPerHour;
-    final height = math.max((endMin - startMin) / 60 * pxPerHour, 24.0);
+    // 节次早于视图起点（如 6:30 的课）时，top 夹到 0，卡片顶边不会被裁掉。
+    final top = math.max((startMin - firstHour * 60) / 60 * pxPerHour, 0.0);
+    // 最小高度 56 保证 三行信息（名称/老师·地址/周次）都能完整显示。
+    final height = math.max((endMin - startMin) / 60 * pxPerHour, 56.0);
     final color = courseColors[course.id.hashCode.abs() % courseColors.length];
-
-    final textLines = [
-      course.name,
-      if (slot.weekSpec.describe().isNotEmpty) slot.weekSpec.describe(),
-    ];
+    final info = [
+      if (course.teacher != null) course.teacher!,
+      if (course.venue != null) course.venue!,
+    ].join(' · ');
+    final spec = slot.weekSpec.describe();
+    final t = Theme.of(context).textTheme;
+    final ink = const Color(0xFF1B1B1F);
     return Positioned(
       top: top,
       left: 3,
@@ -235,29 +236,30 @@ class DayView extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                textLines.join('\n'),
-                maxLines: height > 52 ? 3 : 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Color(0xFF1B1B1F),
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
+            Text(
+              course.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t.labelSmall?.copyWith(color: ink, fontWeight: FontWeight.w600),
             ),
-            if (height > 64 && (course.venue != null || course.teacher != null))
+            if (info.isNotEmpty)
               Text(
-                [course.venue, course.teacher].whereType<String>().join(' · '),
+                info,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF1B1B1F).withValues(alpha: 0.7),
-                    ),
+                style: t.labelSmall?.copyWith(color: ink.withValues(alpha: 0.7)),
+              ),
+            if (spec.isNotEmpty)
+              Text(
+                spec,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: t.labelSmall?.copyWith(color: ink.withValues(alpha: 0.7)),
               ),
           ],
         ),
