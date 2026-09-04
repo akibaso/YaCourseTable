@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import '../core/models.dart';
 import '../parsers/csv_parser.dart';
@@ -51,6 +52,16 @@ class ImportService {
 
   /// Parse an imported file by its name/extension.
   ImportResult importFromFileBytes(String name, List<int> bytes) {
+    return _parseFileDispatch(name, bytes);
+  }
+
+  /// Same as [importFromFileBytes] but runs in a background isolate so the
+  /// UI thread never blocks (fixes the "app freezes after import" issue).
+  Future<ImportResult> importFromFileBytesIsolated(String name, List<int> bytes) {
+    return Isolate.run(() => _parseFileDispatch(name, bytes));
+  }
+
+  static ImportResult _parseFileDispatch(String name, List<int> bytes) {
     final lower = name.toLowerCase();
     List<Course> courses = const [];
     AppData? backup;
