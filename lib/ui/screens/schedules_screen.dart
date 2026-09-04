@@ -154,6 +154,8 @@ class _ScheduleEditSheetState extends State<_ScheduleEditSheet> {
   late final TextEditingController _nameCtrl;
   late DateTime _start;
   late final TextEditingController _weeksCtrl;
+  late String _background;
+  late double _fontSizeScale;
 
   @override
   void initState() {
@@ -161,6 +163,8 @@ class _ScheduleEditSheetState extends State<_ScheduleEditSheet> {
     _nameCtrl = TextEditingController(text: widget.schedule.name);
     _start = DateTime.parse(widget.schedule.semesterStartIso);
     _weeksCtrl = TextEditingController(text: '${widget.schedule.totalWeeks}');
+    _background = widget.schedule.settings.background;
+    _fontSizeScale = widget.schedule.settings.fontSizeScale;
   }
 
   @override
@@ -188,6 +192,8 @@ class _ScheduleEditSheetState extends State<_ScheduleEditSheet> {
         semesterStartIso:
             '${_start.year}-${_start.month.toString().padLeft(2, '0')}-${_start.day.toString().padLeft(2, '0')}',
         totalWeeks: weeks.clamp(1, 60),
+        settings: widget.schedule.settings.copyWith(
+            background: _background, fontSizeScale: _fontSizeScale),
       ),
     );
     Navigator.of(context).pop();
@@ -231,6 +237,29 @@ class _ScheduleEditSheetState extends State<_ScheduleEditSheet> {
               labelText: '总周数',
               border: OutlineInputBorder(),
             ),
+          ),
+          const SizedBox(height: 12),
+          // 个性化设置（背景 / 字号）
+          DropdownMenu<String>(
+            label: const Text('课表背景'),
+            initialSelection: _background,
+            dropdownMenuEntries: const [
+              DropdownMenuEntry(value: 'auto', label: '跟随系统'),
+              DropdownMenuEntry(value: 'light', label: '浅色'),
+              DropdownMenuEntry(value: 'dark', label: '深色'),
+            ],
+            onSelected: (v) => setState(() => _background = v ?? _background),
+          ),
+          const SizedBox(height: 8),
+          DropdownMenu<double>(
+            label: const Text('课程字号'),
+            initialSelection: _fontSizeScale,
+            dropdownMenuEntries: const [
+              DropdownMenuEntry(value: 0.8, label: '小（0.8x）'),
+              DropdownMenuEntry(value: 1.0, label: '标准（1.0x）'),
+              DropdownMenuEntry(value: 1.2, label: '大（1.2x）'),
+            ],
+            onSelected: (v) => setState(() => _fontSizeScale = v ?? _fontSizeScale),
           ),
           const SizedBox(height: 16),
           FilledButton(

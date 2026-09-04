@@ -205,7 +205,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('支持文件：PDF / Excel(xls,xlsx) / CSV / HTML / App 备份(JSON)',
+        Text('支持文件：PDF / Excel(xls,xlsx) / CSV / HTML / ICS / App 备份(JSON)',
             style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 16),
         FilledButton.tonalIcon(
@@ -229,10 +229,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen>
           FilledButton.icon(
             onPressed: _busy || _pickedBytes == null
                 ? null
-                : () => _runIsolated(
+                : () {
+                    // ICS 导入需要活动课表的开学日期与节次时间。
+                    final active =
+                        (ref.read(appDataProvider).value ?? AppData()).activeSchedule();
+                    _runIsolated(
                       () => _import.importFromFileBytesIsolated(
-                          _pickedFileName!, _pickedBytes!),
-                    ),
+                        _pickedFileName!,
+                        _pickedBytes!,
+                        semesterStartIso: active?.semesterStartIso,
+                        periodTimes: active?.periodTimes,
+                      ),
+                    );
+                  },
             icon: const Icon(Icons.upload_file),
             label: const Text('解析并导入'),
           ),

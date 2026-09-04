@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ya_coursetable/app_theme.dart';
 import 'package:ya_coursetable/core/app_state.dart';
 import 'package:ya_coursetable/core/models.dart';
 import 'package:ya_coursetable/core/weeks.dart';
@@ -72,6 +73,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         },
       ),
     );
+  }
+
+  /// 课表背景设置（auto 跟随系统 / light / dark）：覆盖日视图主题。
+  static Widget _applyScheduleBackground(Widget view, String background) {
+    switch (background) {
+      case 'light':
+        return Theme(data: AppTheme.light(), child: view);
+      case 'dark':
+        return Theme(data: AppTheme.dark(), child: view);
+      default:
+        return view;
+    }
   }
 
   @override
@@ -193,11 +206,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     }),
                     children: [
                       for (var w = 1; w <= totalWeeks; w++)
-                        DayView(
-                          schedule: schedule,
-                          week: w,
-                          scrollController: w == week ? _scroll : null,
-                          plan: activePlan,
+                        _applyScheduleBackground(
+                          DayView(
+                            schedule: schedule,
+                            week: w,
+                            scrollController: w == week ? _scroll : null,
+                            plan: activePlan,
+                          ),
+                          schedule.settings.background,
                         ),
                     ],
                   ),

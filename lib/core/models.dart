@@ -176,6 +176,13 @@ class ScheduleSettings {
 
   ScheduleSettings({this.background = 'auto', this.fontSizeScale = 1.0});
 
+  /// 不可变更新：仅改指定字段。
+  ScheduleSettings copyWith({String? background, double? fontSizeScale}) =>
+      ScheduleSettings(
+        background: background ?? this.background,
+        fontSizeScale: fontSizeScale ?? this.fontSizeScale,
+      );
+
   static ScheduleSettings fromJson(Map<String, dynamic> json) =>
       ScheduleSettings(
         background: (json['background'] ?? 'auto') as String,

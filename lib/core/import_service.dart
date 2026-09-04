@@ -4,6 +4,7 @@ import 'dart:isolate';
 import '../core/models.dart';
 import '../parsers/csv_parser.dart';
 import '../parsers/excel_parser.dart';
+import '../parsers/ics_parser.dart';
 import '../parsers/html_parser.dart';
 import '../parsers/pdf_parser.dart';
 import '../parsers/shared_link_parser.dart';
@@ -40,11 +41,26 @@ class ImportService {
 
   /// Same as [importFromFileBytes] but runs in a background isolate so the
   /// UI thread never blocks (fixes the "app freezes after import" issue).
-  Future<ImportResult> importFromFileBytesIsolated(String name, List<int> bytes) {
-    return Isolate.run(() => _parseFileDispatch(name, bytes));
+  ///
+  /// [semesterStartIso] / [periodTimes] 仅 ICS 导入需要：把事件日期换算成周序号
+  /// 并按课表节次时间映射节次号。
+  Future<ImportResult> importFromFileBytesIsolated(
+    String name,
+    List<int> bytes, {
+    String? semesterStartIso,
+    List<PeriodTime>? periodTimes,
+  }) {
+    return Isolate.run(
+        () => _parseFileDispatch(name, bytes,
+            semesterStartIso: semesterStartIso, periodTimes: periodTimes));
   }
 
-  static ImportResult _parseFileDispatch(String name, List<int> bytes) {
+  static ImportResult _parseFileDispatch(
+    String name,
+    List<int> bytes, {
+    String? semesterStartIso,
+    List<PeriodTime>? periodTimes,
+  }) {
     final lower = name.toLowerCase();
     List<Course> courses = const [];
     AppData? backup;
@@ -60,6 +76,11 @@ class ImportService {
       } catch (_) {
         return const ImportResult(message: '备份文件格式不正确，无法解析。');
       }
+    } else if (lower.endsWith('.ics')) {
+      // ICS 日历文件：事件日期按开学日期换算周序号，时间按节次映射。
+      final iso = semesterStartIso ?? _defaultSemesterIso();
+      courses = IcsParser.parse(bytes, 'new_schedule', iso, periodTimes: periodTimes);
+      message = _countMessage(courses, 'ICS');
     } else if (lower.endsWith('.pdf')) {
       courses = PdfParser.parse(bytes, 'new_schedule');
       message = _countMessage(courses, 'PDF');
@@ -73,7 +94,9 @@ class ImportService {
       courses = HtmlParser.parseHtml(utf8.decode(bytes, allowMalformed: true), 'new_schedule');
       message = _countMessage(courses, 'HTML');
     } else {
-      return ImportResult(message: '不支持的文件类型：$name（支持 PDF / Excel / CSV / HTML / JSON 备份）。');
+      return ImportResult(
+          message:
+              '不支持的文件类型：$name（支持 PDF / Excel / CSV / HTML / ICS / JSON 备份）。');
     }
 
     if (backup != null) {
@@ -97,5 +120,14 @@ class ImportService {
   static String _countMessage(List<Course> courses, String source) {
     if (courses.isEmpty) return '$source 未解析出课程，请检查文件内容。';
     return '$source 成功解析 ${courses.length} 门课程。';
+  }
+
+  /// 未提供开学日期时，用本周一作为默认学期起点。
+  static String _defaultSemesterIso() {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final m = monday.month.toString().padLeft(2, '0');
+    final d = monday.day.toString().padLeft(2, '0');
+    return '${monday.year}-$m-$d';
   }
 }

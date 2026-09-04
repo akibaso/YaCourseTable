@@ -20,9 +20,17 @@ class TodayStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
+    final scale = schedule.settings.fontSizeScale;
     final today = DateTime.now().weekday; // 1=周一
     final items = _todayClasses(schedule, week, today, plan);
     if (items.isEmpty) return const SizedBox.shrink();
+    final timeStyle = t.labelSmall?.copyWith(color: scheme.onSurfaceVariant, fontSize: 10 * scale);
+    final nameStyle = t.labelMedium?.copyWith(
+      color: scheme.onSurface,
+      fontWeight: FontWeight.w600,
+      fontSize: 14 * scale,
+    );
+    final infoStyle = t.labelSmall?.copyWith(color: scheme.onSurfaceVariant, fontSize: 10 * scale);
 
     return SizedBox(
       height: 76,
@@ -51,26 +59,21 @@ class TodayStrip extends StatelessWidget {
               children: [
                 Text(
                   timeRange,
-                  style: t.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                  style: timeStyle,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   course.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: t.labelMedium?.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: nameStyle,
                 ),
                 if (info.isNotEmpty)
                   Text(
                     info,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: t.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                    style: infoStyle,
                   ),
               ],
             ),

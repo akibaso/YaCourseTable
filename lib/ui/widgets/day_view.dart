@@ -220,8 +220,10 @@ class DayView extends StatelessWidget {
     final endMin = times[slot.endPeriod - 1].endMin;
     // 节次早于视图起点（如 6:30 的课）时，top 夹到 0，卡片顶边不会被裁掉。
     final top = math.max((startMin - firstHour * 60) / 60 * pxPerHour, 0.0);
-    // 最小高度 56 保证 三行信息（名称/老师·地址/周次）都能完整显示。
-    final height = math.max((endMin - startMin) / 60 * pxPerHour, 56.0);
+    // 最小高度 56 保证 三行信息（名称/老师·地址/周次）都能完整显示；
+    // 随课表字号设置（fontSizeScale）缩放。
+    final scale = schedule.settings.fontSizeScale;
+    final height = math.max((endMin - startMin) / 60 * pxPerHour, 56 * scale);
     final color = courseColors[course.id.hashCode.abs() % courseColors.length];
     final info = [
       if (course.teacher != null) course.teacher!,
@@ -230,6 +232,12 @@ class DayView extends StatelessWidget {
     final spec = slot.weekSpec.describe();
     final t = Theme.of(context).textTheme;
     final ink = const Color(0xFF1B1B1F);
+    final nameStyle = t.labelSmall?.copyWith(
+      color: ink,
+      fontWeight: FontWeight.w600,
+      fontSize: 11 * scale,
+    );
+    final infoStyle = t.labelSmall?.copyWith(color: ink.withValues(alpha: 0.7), fontSize: 10 * scale);
     return Positioned(
       top: top,
       left: 3,
@@ -250,21 +258,21 @@ class DayView extends StatelessWidget {
               course.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: t.labelSmall?.copyWith(color: ink, fontWeight: FontWeight.w600),
+              style: nameStyle,
             ),
             if (info.isNotEmpty)
               Text(
                 info,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: t.labelSmall?.copyWith(color: ink.withValues(alpha: 0.7)),
+                style: infoStyle,
               ),
             if (spec.isNotEmpty)
               Text(
                 spec,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: t.labelSmall?.copyWith(color: ink.withValues(alpha: 0.7)),
+                style: infoStyle,
               ),
           ],
         ),
