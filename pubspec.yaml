@@ -45,6 +45,7 @@ dependencies:
   flutter_local_notifications: ^20.1.0
   flutter_app_widget: ^0.0.2
   flutter_riverpod: ^3.3.2
+  archive: ^3.6.1
 
 dev_dependencies:
   flutter_test:
