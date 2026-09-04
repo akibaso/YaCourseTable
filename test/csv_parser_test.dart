@@ -3,8 +3,8 @@ import 'package:ya_coursetable/parsers/csv_parser.dart';
 
 void main() {
   test('parses CSV grid text', () {
-    // 每个课程单元格本身用引号包裹、其中含换行；后续行必须也用引号，
-    // 且首个字段为时段标签（上午/下午…）才会被 CSV 解析器正确换行。
+    // Simple, well-formed CSV: each course cell is quoted with an embedded
+    // newline, and every physical row is a proper CSV record.
     final csv = '''
 时间段,节次,星期一,星期二,星期三,星期四,星期五,星期六,星期日
 "上午","1-2","模拟电子技术*

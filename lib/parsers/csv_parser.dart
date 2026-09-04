@@ -6,10 +6,13 @@ import 'schedule_parser.dart';
 /// Parses CSV schedule files: same grid layout as the Excel/PDF formats.
 ///
 /// Layout: a header with 时间段/节次/星期一..星期日, then rows whose day
-/// columns hold stacked course text. Because courses contain line breaks,
-/// the RFC-4180 quote handling can merge several physical lines into one
-/// record (the 节次 labels like "1-2" then appear mid-record). Both forms
-/// are handled here.
+/// columns hold stacked course text. Because course cells contain line
+/// breaks, the RFC-4180 quote handling merges the following 时段 label
+/// ("上午") into the 星期日 cell — so one physical data row becomes part of
+/// the SAME record as the header, shifting all course cells right. The
+/// parser therefore scans records after the header and attributes a course
+/// cell to the day column whose header appears nearest to its left
+/// (tracking the day seen so far in the row).
 class CsvParser {
   static List<Course> parseText(String text, String scheduleId) {
     final records = const CsvToListConverter().convert(text.trim());
@@ -38,18 +41,20 @@ class CsvParser {
     final courses = <Course>[];
     for (var r = headerIdx; r < records.length; r++) {
       final row = records[r].cast<String>();
-      // Map each non-empty day cell to the nearest PRECEDING day column
-      // (cells may be shifted right when earlier lines merged).
+      // Re-scan the header day names in THIS row first (wrapped headers),
+      // then for each non-empty cell assign the nearest preceding day.
       var lastDay = 0;
       for (var c = 0; c < row.length; c++) {
         final cell = row[c].trim();
-        final day = ScheduleParser.dayNumber(cell);
-        if (day != null) {
-          lastDay = day;
+        final headerDay = ScheduleParser.dayNumber(cell);
+        if (headerDay != null) {
+          lastDay = headerDay;
           continue;
         }
         if (cell.isEmpty) continue;
         if (RegExp(r'^\d+$').hasMatch(cell)) continue; // 节次数字行（时段标签）
+        // '1-2' style 节次 labels sit left of the course column.
+        if (RegExp(r'^\d+-\d+$').hasMatch(cell)) continue;
         if (lastDay == 0) continue;
         courses.addAll(ScheduleParser.parseCell(cell, lastDay, scheduleId));
       }
